@@ -1,6 +1,7 @@
+import html
 import json
 import subprocess
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
 
 app = Flask(__name__)
 
@@ -27,11 +28,13 @@ def run_cmd():
     return result.stdout
 
 
-@app.route("/load")
+@app.route("/load", methods=["POST"])
 def load_data():
     try:
-        # 改用純資料格式的 json.loads() 取代 pickle.loads()，防止反序列化漏洞
         data = json.loads(request.data.decode("utf-8"))
-        return {"received": data}
+        # 使用 html.escape() 過濾潛在的惡意腳本標籤，防止反射型 XSS
+        safe_data = html.escape(json.dumps(data))
+        return jsonify({"received": safe_data})
     except (json.JSONDecodeError, UnicodeDecodeError):
         abort(400, description="Invalid JSON payload")
+        
