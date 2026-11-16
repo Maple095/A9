@@ -1,7 +1,19 @@
 import os
+import pickle
+from flask import Flask, request
+
+app = Flask(__name__)
 
 
-def run_user_command():
-    user_input = input("Enter command: ")
-    # 刻意將使用者輸入直接交給 eval 或 os.system 執行（會觸發 CodeQL 高風險警報）
-    os.system("echo " + user_input)
+@app.route("/run")
+def run_cmd():
+    # 來自網頁 URL 參數的外部輸入（CodeQL 會判定為高風險不可信來源）
+    cmd = request.args.get("cmd", "")
+    os.system(cmd)
+    return "OK"
+
+
+@app.route("/load")
+def load_data():
+    data = request.data
+    return str(pickle.loads(data))
